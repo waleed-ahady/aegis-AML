@@ -1,0 +1,8 @@
+extends: base.yaml
+project:
+  random_seed: 42
+training:
+  model:
+    max_iter: 180
+serving:
+  api_key_required: false

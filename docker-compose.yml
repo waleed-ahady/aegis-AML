@@ -1,0 +1,113 @@
+services:
+  bootstrap:
+    build: .
+    command: >
+      sh -c "python scripts/generate_demo_data.py --rows 12000 --output data/raw/demo_transactions.csv &&
+             python scripts/ingest_data.py --input data/raw/demo_transactions.csv --output data/processed/transactions.csv &&
+             python scripts/train_model.py --data data/processed/transactions.csv --output models/model_bundle.joblib --report reports/evaluation.json"
+    environment:
+      AEGIS_CONFIG: configs/development.yaml
+    volumes:
+      - aegis_data:/app/data
+      - aegis_models:/app/models
+      - aegis_reports:/app/reports
+
+  api:
+    build: .
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    environment:
+      AEGIS_CONFIG: configs/development.yaml
+      AEGIS_MODEL_PATH: /app/models/model_bundle.joblib
+      AEGIS_DATABASE_URL: postgresql+psycopg://aegis:aegis@postgres:5432/aegis
+      AEGIS_KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+    volumes:
+      - aegis_models:/app/models:ro
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/ready')"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  dashboard:
+    build: .
+    command: streamlit run dashboard.py --server.address=0.0.0.0 --server.port=8501
+    depends_on:
+      api:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      AEGIS_DATABASE_URL: postgresql+psycopg://aegis:aegis@postgres:5432/aegis
+      AEGIS_API_URL: http://api:8000
+      AEGIS_EVALUATION_REPORT: /app/reports/evaluation.json
+      AEGIS_DRIFT_REPORT: /app/reports/drift.json
+      AEGIS_GRAPH_REPORT: /app/reports/graph_risk.csv
+    volumes:
+      - aegis_reports:/app/reports:ro
+    ports:
+      - "8501:8501"
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: aegis
+      POSTGRES_PASSWORD: aegis
+      POSTGRES_DB: aegis
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aegis -d aegis"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redpanda:
+    image: redpandadata/redpanda:v24.3.3
+    command:
+      - redpanda
+      - start
+      - --overprovisioned
+      - --smp=1
+      - --memory=1G
+      - --reserve-memory=0M
+      - --node-id=0
+      - --check=false
+      - --kafka-addr=PLAINTEXT://0.0.0.0:9092,OUTSIDE://0.0.0.0:19092
+      - --advertise-kafka-addr=PLAINTEXT://redpanda:9092,OUTSIDE://localhost:19092
+    ports:
+      - "19092:19092"
+      - "9644:9644"
+
+  prometheus:
+    image: prom/prometheus:v3.1.0
+    depends_on:
+      api:
+        condition: service_healthy
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+
+  consumer:
+    build: .
+    command: python scripts/stream_consumer.py --bootstrap redpanda:9092 --api-url http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+      redpanda:
+        condition: service_started
+    environment:
+      AEGIS_KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+    restart: unless-stopped
+
+volumes:
+  aegis_data:
+  aegis_models:
+  aegis_reports:
+  postgres_data:

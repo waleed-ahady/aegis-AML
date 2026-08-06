@@ -1,0 +1,31 @@
+project:
+  name: AegisAML
+  random_seed: 42
+
+data:
+  timestamp_column: timestamp
+  label_column: is_laundering
+  max_rows: null
+
+training:
+  validation_fraction: 0.15
+  test_fraction: 0.15
+  false_positive_cost: 1.0
+  false_negative_cost: 25.0
+  max_alert_rate: 0.05
+  min_recall: 0.50
+  model:
+    learning_rate: 0.08
+    max_iter: 250
+    max_leaf_nodes: 31
+    min_samples_leaf: 30
+    l2_regularization: 1.0
+
+serving:
+  threshold_override: null
+  api_key_required: false
+  update_in_memory_profiles: true
+
+monitoring:
+  psi_warning: 0.10
+  psi_critical: 0.25

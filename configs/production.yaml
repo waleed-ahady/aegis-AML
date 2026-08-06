@@ -1,0 +1,9 @@
+extends: base.yaml
+training:
+  max_alert_rate: 0.02
+serving:
+  api_key_required: true
+  update_in_memory_profiles: false
+monitoring:
+  psi_warning: 0.08
+  psi_critical: 0.20
