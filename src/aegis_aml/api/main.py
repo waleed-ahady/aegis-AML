@@ -23,7 +23,12 @@ from aegis_aml.monitoring.metrics import (
     SCORE_LATENCY,
     SCORE_REQUESTS,
 )
-from aegis_aml.persistence.database import add_feedback, create_session_factory, recent_alerts, save_alert
+from aegis_aml.persistence.database import (
+    add_feedback,
+    create_session_factory,
+    recent_alerts,
+    save_alert,
+)
 
 configure_logging()
 logger = logging.getLogger(__name__)
@@ -66,13 +71,15 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-@app.get("/", tags=["Root"]) # added one
+
+@app.get("/", tags=["Root"])  # added one
 def root():
-    return {"project": "AegisAML",
+    return {
+        "project": "AegisAML",
         "version": "0.1.0",
         "docs": "/docs",
         "health": "/health",
-        "ready": "/ready"
+        "ready": "/ready",
     }
 
 
@@ -105,7 +112,9 @@ def ready() -> HealthResponse:
     service = app.state.scoring_service
     if service is None:
         raise HTTPException(status_code=503, detail="Model is not loaded")
-    return HealthResponse(status="ready", model_ready=True, model_version=service.bundle.model_version)
+    return HealthResponse(
+        status="ready", model_ready=True, model_version=service.bundle.model_version
+    )
 
 
 @app.post("/v1/score", response_model=ScoreResponse, dependencies=[Depends(require_api_key)])

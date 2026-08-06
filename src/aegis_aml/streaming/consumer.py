@@ -13,7 +13,9 @@ def _kafka_clients(bootstrap_servers: str, group_id: str) -> tuple[Any, Any]:
     try:
         from confluent_kafka import Consumer, Producer
     except ImportError as exc:
-        raise RuntimeError("Install streaming support with `pip install -e '.[streaming]'`") from exc
+        raise RuntimeError(
+            "Install streaming support with `pip install -e '.[streaming]'`"
+        ) from exc
     consumer = Consumer(
         {
             "bootstrap.servers": bootstrap_servers,
@@ -22,7 +24,9 @@ def _kafka_clients(bootstrap_servers: str, group_id: str) -> tuple[Any, Any]:
             "enable.auto.commit": False,
         }
     )
-    producer = Producer({"bootstrap.servers": bootstrap_servers, "client.id": "aegis-alert-producer"})
+    producer = Producer(
+        {"bootstrap.servers": bootstrap_servers, "client.id": "aegis-alert-producer"}
+    )
     return consumer, producer
 
 
@@ -56,7 +60,7 @@ def consume_and_score(
                     print("API RESPONSE:")
                     print(response.status_code, response.text)
                     continue
-                result=response.json()
+                result = response.json()
 
                 response.raise_for_status()
                 result = response.json()

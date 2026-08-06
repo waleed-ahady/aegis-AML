@@ -33,7 +33,13 @@ def categorical_distance(reference: pd.Series, current: pd.Series) -> float:
     reference_dist = reference.astype(str).value_counts(normalize=True)
     current_dist = current.astype(str).value_counts(normalize=True)
     categories = reference_dist.index.union(current_dist.index)
-    return float(0.5 * np.abs(reference_dist.reindex(categories, fill_value=0) - current_dist.reindex(categories, fill_value=0)).sum())
+    return float(
+        0.5
+        * np.abs(
+            reference_dist.reindex(categories, fill_value=0)
+            - current_dist.reindex(categories, fill_value=0)
+        ).sum()
+    )
 
 
 def drift_report(
@@ -53,10 +59,22 @@ def drift_report(
         "pair_prev_count",
     ]
     categorical_columns = ["payment_format", "payment_currency", "receiving_currency"]
-    numeric = {column: population_stability_index(reference[column], current[column]) for column in numeric_columns}
-    categorical = {column: categorical_distance(reference[column], current[column]) for column in categorical_columns}
+    numeric = {
+        column: population_stability_index(reference[column], current[column])
+        for column in numeric_columns
+    }
+    categorical = {
+        column: categorical_distance(reference[column], current[column])
+        for column in categorical_columns
+    }
     maximum = max([*numeric.values(), *categorical.values()], default=0.0)
-    status = "critical" if maximum >= critical_threshold else "warning" if maximum >= warning_threshold else "healthy"
+    status = (
+        "critical"
+        if maximum >= critical_threshold
+        else "warning"
+        if maximum >= warning_threshold
+        else "healthy"
+    )
     report: dict[str, Any] = {
         "status": status,
         "max_drift": maximum,

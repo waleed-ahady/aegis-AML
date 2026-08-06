@@ -3,7 +3,6 @@ from __future__ import annotations
 import argparse
 import json
 import os
-from pathlib import Path
 
 from aegis_aml.data.generate import write_demo
 from aegis_aml.data.ingest import ingest_csv, read_transactions
@@ -15,10 +14,14 @@ from aegis_aml.streaming.producer import stream_csv
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="aegis-aml", description="AegisAML command-line interface")
+    parser = argparse.ArgumentParser(
+        prog="aegis-aml", description="AegisAML command-line interface"
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    generate = subparsers.add_parser("generate-demo", help="Generate IBM-schema-compatible demo data")
+    generate = subparsers.add_parser(
+        "generate-demo", help="Generate IBM-schema-compatible demo data"
+    )
     generate.add_argument("--rows", type=int, default=10_000)
     generate.add_argument("--seed", type=int, default=42)
     generate.add_argument("--output", default="data/raw/demo_transactions.csv")
@@ -36,26 +39,38 @@ def build_parser() -> argparse.ArgumentParser:
     train.add_argument("--config")
     train.add_argument("--max-rows", type=int)
 
-    graph = subparsers.add_parser("graph-report", help="Build an offline account-network risk report")
+    graph = subparsers.add_parser(
+        "graph-report", help="Build an offline account-network risk report"
+    )
     graph.add_argument("--data", required=True)
     graph.add_argument("--output", default="reports/graph_risk.csv")
 
-    drift = subparsers.add_parser("drift", help="Compare a reference and current transaction window")
+    drift = subparsers.add_parser(
+        "drift", help="Compare a reference and current transaction window"
+    )
     drift.add_argument("--reference", required=True)
     drift.add_argument("--current", required=True)
     drift.add_argument("--output", default="reports/drift.json")
 
     producer = subparsers.add_parser("produce", help="Replay a CSV into Kafka/Redpanda")
     producer.add_argument("--data", required=True)
-    producer.add_argument("--bootstrap", default=os.getenv("AEGIS_KAFKA_BOOTSTRAP_SERVERS", "localhost:19092"))
+    producer.add_argument(
+        "--bootstrap", default=os.getenv("AEGIS_KAFKA_BOOTSTRAP_SERVERS", "localhost:19092")
+    )
     producer.add_argument("--topic", default=os.getenv("AEGIS_KAFKA_INPUT_TOPIC", "transactions"))
     producer.add_argument("--rate", type=float, default=10.0)
     producer.add_argument("--limit", type=int)
 
     consumer = subparsers.add_parser("consume", help="Consume, score, and emit AML alerts")
-    consumer.add_argument("--bootstrap", default=os.getenv("AEGIS_KAFKA_BOOTSTRAP_SERVERS", "localhost:19092"))
-    consumer.add_argument("--input-topic", default=os.getenv("AEGIS_KAFKA_INPUT_TOPIC", "transactions"))
-    consumer.add_argument("--alert-topic", default=os.getenv("AEGIS_KAFKA_ALERT_TOPIC", "aml-alerts"))
+    consumer.add_argument(
+        "--bootstrap", default=os.getenv("AEGIS_KAFKA_BOOTSTRAP_SERVERS", "localhost:19092")
+    )
+    consumer.add_argument(
+        "--input-topic", default=os.getenv("AEGIS_KAFKA_INPUT_TOPIC", "transactions")
+    )
+    consumer.add_argument(
+        "--alert-topic", default=os.getenv("AEGIS_KAFKA_ALERT_TOPIC", "aml-alerts")
+    )
     consumer.add_argument("--api-url", default=os.getenv("AEGIS_API_URL", "http://localhost:8000"))
     consumer.add_argument("--api-key", default=os.getenv("AEGIS_API_KEY"))
     return parser

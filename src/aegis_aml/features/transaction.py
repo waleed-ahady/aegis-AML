@@ -6,7 +6,6 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-
 CATEGORICAL_FEATURES = ["payment_format", "payment_currency", "receiving_currency"]
 NUMERIC_FEATURES = [
     "amount_paid",
@@ -72,16 +71,20 @@ def build_causal_features(frame: pd.DataFrame) -> pd.DataFrame:
 
     ordered["sender_prev_tx_count"] = sender_count
     ordered["receiver_prev_tx_count"] = receiver_count
-    ordered["sender_prev_avg_amount"] = (sender_prior_sum / sender_count.replace(0, np.nan)).fillna(0.0)
+    ordered["sender_prev_avg_amount"] = (sender_prior_sum / sender_count.replace(0, np.nan)).fillna(
+        0.0
+    )
     ordered["receiver_prev_avg_amount"] = (
         receiver_prior_sum / receiver_count.replace(0, np.nan)
     ).fillna(0.0)
     ordered["sender_amount_to_avg"] = (
-        amount / ordered["sender_prev_avg_amount"].replace(0, np.nan)
-    ).fillna(1.0).clip(upper=1000)
+        (amount / ordered["sender_prev_avg_amount"].replace(0, np.nan)).fillna(1.0).clip(upper=1000)
+    )
     ordered["receiver_amount_to_avg"] = (
-        amount / ordered["receiver_prev_avg_amount"].replace(0, np.nan)
-    ).fillna(1.0).clip(upper=1000)
+        (amount / ordered["receiver_prev_avg_amount"].replace(0, np.nan))
+        .fillna(1.0)
+        .clip(upper=1000)
+    )
 
     sender_delta = sender_group["timestamp"].diff().dt.total_seconds().div(60)
     receiver_delta = receiver_group["timestamp"].diff().dt.total_seconds().div(60)
@@ -122,7 +125,7 @@ class FeatureState:
     pair_counts: dict[tuple[str, str], int] = field(default_factory=dict)
 
     @classmethod
-    def from_frame(cls, frame: pd.DataFrame) -> "FeatureState":
+    def from_frame(cls, frame: pd.DataFrame) -> FeatureState:
         state = cls()
         for row in frame.sort_values("timestamp", kind="stable").itertuples(index=False):
             state.update(
@@ -178,7 +181,9 @@ class FeatureState:
             "sender_prev_avg_amount": sender_avg,
             "receiver_prev_avg_amount": receiver_avg,
             "sender_amount_to_avg": min(amount_paid / sender_avg, 1000) if sender_avg else 1.0,
-            "receiver_amount_to_avg": min(amount_paid / receiver_avg, 1000) if receiver_avg else 1.0,
+            "receiver_amount_to_avg": min(amount_paid / receiver_avg, 1000)
+            if receiver_avg
+            else 1.0,
             "sender_minutes_since_last": minutes_since(sender.last_sent_timestamp),
             "receiver_minutes_since_last": minutes_since(receiver.last_received_timestamp),
             "pair_prev_count": self.pair_counts.get((sender_id, receiver_id), 0),
@@ -189,7 +194,9 @@ class FeatureState:
             "receiving_currency": str(transaction["receiving_currency"]),
         }
 
-    def update(self, from_account: str, to_account: str, amount: float, timestamp: pd.Timestamp) -> None:
+    def update(
+        self, from_account: str, to_account: str, amount: float, timestamp: pd.Timestamp
+    ) -> None:
         timestamp = pd.Timestamp(timestamp)
         sender = self._profile(from_account)
         receiver = self._profile(to_account)

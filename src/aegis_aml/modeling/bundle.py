@@ -27,7 +27,7 @@ class ModelBundle:
         return destination
 
     @classmethod
-    def load(cls, path: str | Path) -> "ModelBundle":
+    def load(cls, path: str | Path) -> ModelBundle:
         bundle = joblib.load(Path(path))
         if not isinstance(bundle, cls):
             raise TypeError(f"Expected ModelBundle, received {type(bundle)!r}")

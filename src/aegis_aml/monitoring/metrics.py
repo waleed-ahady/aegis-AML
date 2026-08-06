@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from prometheus_client import Counter, Gauge, Histogram
 
-
 SCORE_REQUESTS = Counter(
     "aegis_score_requests_total", "Total transaction scoring requests", ["decision", "status"]
 )

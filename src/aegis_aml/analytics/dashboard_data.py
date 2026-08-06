@@ -7,7 +7,6 @@ from typing import Any
 import pandas as pd
 from sqlalchemy import Engine, inspect, text
 
-
 ALERT_COLUMNS = [
     "id",
     "alert_id",
@@ -81,8 +80,11 @@ def flatten_alerts(alerts: pd.DataFrame) -> pd.DataFrame:
     ]
     for field in payload_fields:
         result[field] = result["payload"].map(
-            lambda payload: payload.get(field) if isinstance(payload, dict) else None
+            lambda payload, field=field: (
+                payload.get(field) if isinstance(payload, dict) else None
+            )
         )
+
     result["amount_paid"] = pd.to_numeric(result["amount_paid"], errors="coerce")
     result["amount_received"] = pd.to_numeric(result["amount_received"], errors="coerce")
     result["reason_text"] = result["reason_codes"].map(
@@ -123,10 +125,7 @@ def reason_counts(alerts: pd.DataFrame) -> pd.DataFrame:
     if exploded.empty:
         return pd.DataFrame(columns=["reason_code", "count"])
     return (
-        exploded["reason_codes"]
-        .value_counts()
-        .rename_axis("reason_code")
-        .reset_index(name="count")
+        exploded["reason_codes"].value_counts().rename_axis("reason_code").reset_index(name="count")
     )
 
 

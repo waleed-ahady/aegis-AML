@@ -46,7 +46,8 @@ def build_graph_risk_report(frame: pd.DataFrame, output: str | Path | None = Non
         in_count = sum(int(data["transaction_count"]) for _, _, data in incoming)
         labelled = sum(
             int(data["laundering_count"])
-            for _, _, data in list(graph.in_edges(node, data=True)) + list(graph.out_edges(node, data=True))
+            for _, _, data in list(graph.in_edges(node, data=True))
+            + list(graph.out_edges(node, data=True))
         )
         reciprocal = sum(1 for target in graph.successors(node) if graph.has_edge(target, node))
         rows.append(
@@ -74,7 +75,11 @@ def build_graph_risk_report(frame: pd.DataFrame, output: str | Path | None = Non
         "reciprocal_counterparties",
     ]
     for column in score_columns:
-        values = np.log1p(report[column].astype(float)) if "amount" in column else report[column].astype(float)
+        values = (
+            np.log1p(report[column].astype(float))
+            if "amount" in column
+            else report[column].astype(float)
+        )
         std = values.std(ddof=0)
         report[f"z_{column}"] = (values - values.mean()) / std if std else 0.0
     report["network_risk_score"] = report[[f"z_{column}" for column in score_columns]].mean(axis=1)

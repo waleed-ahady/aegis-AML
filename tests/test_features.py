@@ -19,7 +19,9 @@ def test_offline_and_online_feature_parity_for_next_transaction() -> None:
         if isinstance(online[feature], str):
             assert online[feature] == offline[feature]
         else:
-            assert math.isclose(float(online[feature]), float(offline[feature]), rel_tol=1e-8, abs_tol=1e-8)
+            assert math.isclose(
+                float(online[feature]), float(offline[feature]), rel_tol=1e-8, abs_tol=1e-8
+            )
 
 
 def test_current_transaction_is_not_counted_in_its_own_history() -> None:

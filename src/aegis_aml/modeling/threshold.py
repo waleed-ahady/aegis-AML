@@ -40,9 +40,12 @@ def select_threshold(
 
         if fallback is None or result.expected_cost < fallback.expected_cost:
             fallback = result
-        if alert_rate <= max_alert_rate and recall >= min_recall:
-            if best is None or result.expected_cost < best.expected_cost:
-                best = result
+        if (
+            alert_rate <= max_alert_rate
+            and recall >= min_recall
+            and (best is None or result.expected_cost < best.expected_cost)
+        ):
+            best = result
 
     if best is not None:
         return best

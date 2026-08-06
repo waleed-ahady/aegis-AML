@@ -3,6 +3,7 @@
 
 Requires Kaggle credentials. This script deliberately does not redistribute the dataset.
 """
+
 from __future__ import annotations
 
 import argparse

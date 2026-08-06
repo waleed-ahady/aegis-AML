@@ -4,7 +4,7 @@ import os
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import Boolean, DateTime, Float, Integer, JSON, String, create_engine
+from sqlalchemy import JSON, Boolean, DateTime, Float, Integer, String, create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
 
 
@@ -18,7 +18,9 @@ class AlertRecord(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     alert_id: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     transaction_id: Mapped[str] = mapped_column(String(128), index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC)
+    )
     risk_score: Mapped[float] = mapped_column(Float)
     threshold: Mapped[float] = mapped_column(Float)
     decision: Mapped[bool] = mapped_column(Boolean)
@@ -59,7 +61,9 @@ def add_feedback(
 
 def recent_alerts(session_factory: sessionmaker[Session], limit: int = 100) -> list[dict[str, Any]]:
     with session_factory() as session:
-        records = session.query(AlertRecord).order_by(AlertRecord.created_at.desc()).limit(limit).all()
+        records = (
+            session.query(AlertRecord).order_by(AlertRecord.created_at.desc()).limit(limit).all()
+        )
         return [
             {
                 "alert_id": row.alert_id,

@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import os
-from datetime import UTC, datetime, timedelta
-from pathlib import Path
+from datetime import UTC, datetime
 from typing import Any
 
 import httpx
@@ -101,7 +100,9 @@ st.caption("Alert operations, investigation, model performance, service health, 
 
 with st.sidebar:
     st.header("Controls")
-    row_limit = st.select_slider("Alerts to load", options=[100, 500, 1000, 5000, 10000], value=5000)
+    row_limit = st.select_slider(
+        "Alerts to load", options=[100, 500, 1000, 5000, 10000], value=5000
+    )
     auto_refresh = st.toggle("Auto-refresh every 15 seconds", value=False)
     st.caption(f"Database: `{DATABASE_URL}`")
     st.caption(f"API: `{API_URL}`")
@@ -132,7 +133,9 @@ kpi1, kpi2, kpi3, kpi4, kpi5 = st.columns(5)
 kpi1.metric("Stored alerts", f"{int(summary['total_alerts']):,}")
 kpi2.metric("Loaded for analysis", f"{int(summary['loaded_alerts']):,}")
 kpi3.metric("Average alert risk", f"{float(summary['average_risk']):.3f}")
-kpi4.metric("Reviewed", f"{int(summary['reviewed']):,}", format_percent(float(summary["review_rate"])))
+kpi4.metric(
+    "Reviewed", f"{int(summary['reviewed']):,}", format_percent(float(summary["review_rate"]))
+)
 kpi5.metric("API / model", status_label, model_version or "No model version")
 
 if health_error:
@@ -160,7 +163,13 @@ with overview_tab:
                 .sort_values("day")
             )
             st.plotly_chart(
-                px.line(daily, x="day", y="alerts", markers=True, labels={"day": "Date", "alerts": "Alerts"}),
+                px.line(
+                    daily,
+                    x="day",
+                    y="alerts",
+                    markers=True,
+                    labels={"day": "Date", "alerts": "Alerts"},
+                ),
                 use_container_width=True,
             )
     with right:
@@ -181,7 +190,13 @@ with overview_tab:
             st.info("No reason codes are available yet.")
         else:
             st.plotly_chart(
-                px.bar(reasons.sort_values("count"), x="count", y="reason_code", orientation="h", labels={"count": "Alerts", "reason_code": "Reason"}),
+                px.bar(
+                    reasons.sort_values("count"),
+                    x="count",
+                    y="reason_code",
+                    orientation="h",
+                    labels={"count": "Alerts", "reason_code": "Reason"},
+                ),
                 use_container_width=True,
             )
     with right:
@@ -191,11 +206,16 @@ with overview_tab:
         else:
             outcomes = alerts["analyst_outcome"].fillna("unreviewed").value_counts().reset_index()
             outcomes.columns = ["outcome", "count"]
-            st.plotly_chart(px.pie(outcomes, names="outcome", values="count", hole=0.45), use_container_width=True)
+            st.plotly_chart(
+                px.pie(outcomes, names="outcome", values="count", hole=0.45),
+                use_container_width=True,
+            )
 
     st.subheader("Risk by payment format")
     if alerts.empty or alerts["payment_format"].dropna().empty:
-        st.info("Payment-format analytics become available after alerts contain transaction payloads.")
+        st.info(
+            "Payment-format analytics become available after alerts contain transaction payloads."
+        )
     else:
         payment = (
             alerts.dropna(subset=["payment_format"])
@@ -212,8 +232,12 @@ with alerts_tab:
         st.info("No alerts have been generated.")
     else:
         filter1, filter2, filter3, filter4 = st.columns(4)
-        min_risk = filter1.slider("Minimum risk", 0.0, 1.0, float(max(0.0, alerts["risk_score"].min())), 0.01)
-        outcome_options = ["All", "Unreviewed"] + sorted(alerts["analyst_outcome"].dropna().astype(str).unique().tolist())
+        min_risk = filter1.slider(
+            "Minimum risk", 0.0, 1.0, float(max(0.0, alerts["risk_score"].min())), 0.01
+        )
+        outcome_options = ["All", "Unreviewed"] + sorted(
+            alerts["analyst_outcome"].dropna().astype(str).unique().tolist()
+        )
         outcome = filter2.selectbox("Analyst outcome", outcome_options)
         bank_options = ["All"] + sorted(alerts["from_bank"].dropna().astype(str).unique().tolist())
         from_bank = filter3.selectbox("Sender bank", bank_options)
@@ -231,13 +255,29 @@ with alerts_tab:
             search_columns = ["transaction_id", "from_account", "to_account", "alert_id"]
             mask = pd.Series(False, index=filtered.index)
             for column in search_columns:
-                mask |= filtered[column].fillna("").astype(str).str.lower().str.contains(needle, regex=False)
+                mask |= (
+                    filtered[column]
+                    .fillna("")
+                    .astype(str)
+                    .str.lower()
+                    .str.contains(needle, regex=False)
+                )
             filtered = filtered[mask]
 
         st.caption(f"Showing {len(filtered):,} matching alerts")
         display_columns = [
-            "created_at", "alert_id", "transaction_id", "risk_score", "threshold", "amount_paid",
-            "payment_currency", "payment_format", "from_bank", "to_bank", "reason_text", "analyst_outcome",
+            "created_at",
+            "alert_id",
+            "transaction_id",
+            "risk_score",
+            "threshold",
+            "amount_paid",
+            "payment_currency",
+            "payment_format",
+            "from_bank",
+            "to_bank",
+            "reason_text",
+            "analyst_outcome",
         ]
         st.dataframe(filtered[display_columns], use_container_width=True, hide_index=True)
         st.download_button(
@@ -259,20 +299,27 @@ with investigation_tab:
         top1, top2, top3, top4 = st.columns(4)
         top1.metric("Risk score", f"{selected['risk_score']:.4f}")
         top2.metric("Threshold", f"{selected['threshold']:.4f}")
-        top3.metric("Amount", f"{selected.get('amount_paid', 0) or 0:,.2f} {selected.get('payment_currency') or ''}")
+        top3.metric(
+            "Amount",
+            f"{selected.get('amount_paid', 0) or 0:,.2f} {selected.get('payment_currency') or ''}",
+        )
         top4.metric("Model version", str(selected["model_version"]))
 
         detail_left, detail_right = st.columns(2)
         with detail_left:
             st.markdown("**Transaction route**")
-            st.write(f"{selected.get('from_bank')} / {selected.get('from_account')} → {selected.get('to_bank')} / {selected.get('to_account')}")
+            st.write(
+                f"{selected.get('from_bank')} / {selected.get('from_account')} → {selected.get('to_bank')} / {selected.get('to_account')}"
+            )
             st.markdown("**Timestamp**")
             st.write(selected.get("timestamp") or selected.get("created_at"))
             st.markdown("**Payment format**")
             st.write(selected.get("payment_format") or "—")
         with detail_right:
             st.markdown("**Reason codes**")
-            for reason in selected["reason_codes"] if isinstance(selected["reason_codes"], list) else []:
+            for reason in (
+                selected["reason_codes"] if isinstance(selected["reason_codes"], list) else []
+            ):
                 st.code(reason)
             st.markdown("**Current outcome**")
             st.write(selected.get("analyst_outcome") or "Unreviewed")
@@ -286,7 +333,9 @@ with investigation_tab:
         st.caption(f"Current review status: **{current_label}**")
 
         outcome_options = list(OUTCOME_LABELS)
-        default_index = outcome_options.index(current_outcome) if current_outcome in outcome_options else 0
+        default_index = (
+            outcome_options.index(current_outcome) if current_outcome in outcome_options else 0
+        )
         with st.form(f"feedback_form_{selected_id}", clear_on_submit=False):
             outcome = st.radio(
                 "Investigation outcome",
@@ -344,8 +393,34 @@ with model_tab:
         )
         comparison = pd.DataFrame(
             [
-                {"split": "Validation", **{key: validation.get(key) for key in ["precision", "recall", "f1", "average_precision", "roc_auc", "alert_rate"]}},
-                {"split": "Test", **{key: test.get(key) for key in ["precision", "recall", "f1", "average_precision", "roc_auc", "alert_rate"]}},
+                {
+                    "split": "Validation",
+                    **{
+                        key: validation.get(key)
+                        for key in [
+                            "precision",
+                            "recall",
+                            "f1",
+                            "average_precision",
+                            "roc_auc",
+                            "alert_rate",
+                        ]
+                    },
+                },
+                {
+                    "split": "Test",
+                    **{
+                        key: test.get(key)
+                        for key in [
+                            "precision",
+                            "recall",
+                            "f1",
+                            "average_precision",
+                            "roc_auc",
+                            "alert_rate",
+                        ]
+                    },
+                },
             ]
         )
         st.dataframe(comparison, use_container_width=True, hide_index=True)
@@ -354,7 +429,10 @@ with model_tab:
         if confusion:
             st.markdown("### Test confusion matrix")
             matrix = pd.DataFrame(
-                [[confusion.get("tn", 0), confusion.get("fp", 0)], [confusion.get("fn", 0), confusion.get("tp", 0)]],
+                [
+                    [confusion.get("tn", 0), confusion.get("fp", 0)],
+                    [confusion.get("fn", 0), confusion.get("tp", 0)],
+                ],
                 index=["Actual legitimate", "Actual laundering"],
                 columns=["Predicted legitimate", "Predicted alert"],
             )
@@ -373,8 +451,16 @@ with operations_tab:
     op4.metric("Score requests", f"{request_count:,.0f}")
 
     if prometheus:
-        success = sum(value for name, value in prometheus.items() if name.startswith('aegis_score_requests_total') and 'status="success"' in name)
-        errors = sum(value for name, value in prometheus.items() if name.startswith('aegis_score_requests_total') and 'status="error"' in name)
+        success = sum(
+            value
+            for name, value in prometheus.items()
+            if name.startswith("aegis_score_requests_total") and 'status="success"' in name
+        )
+        errors = sum(
+            value
+            for name, value in prometheus.items()
+            if name.startswith("aegis_score_requests_total") and 'status="error"' in name
+        )
         feedback_total = metric_sum(prometheus, "aegis_feedback_total")
         p1, p2, p3 = st.columns(3)
         p1.metric("Successful scores", f"{success:,.0f}")
@@ -383,7 +469,9 @@ with operations_tab:
         with st.expander("Raw Prometheus metrics"):
             st.json(prometheus)
     else:
-        st.info("Prometheus metrics are unavailable. Start the API and ensure `/metrics` is reachable.")
+        st.info(
+            "Prometheus metrics are unavailable. Start the API and ensure `/metrics` is reachable."
+        )
 
     st.markdown("### Configuration")
     st.code(
@@ -400,8 +488,16 @@ with risk_tab:
             st.info(f"Graph report not found or empty at `{GRAPH_REPORT}`.")
         else:
             numeric_columns = graph.select_dtypes(include="number").columns.tolist()
-            score_candidates = [name for name in numeric_columns if "risk" in name.lower() or "pagerank" in name.lower()]
-            score_column = score_candidates[0] if score_candidates else (numeric_columns[0] if numeric_columns else None)
+            score_candidates = [
+                name
+                for name in numeric_columns
+                if "risk" in name.lower() or "pagerank" in name.lower()
+            ]
+            score_column = (
+                score_candidates[0]
+                if score_candidates
+                else (numeric_columns[0] if numeric_columns else None)
+            )
             if score_column:
                 top_graph = graph.nlargest(20, score_column)
                 st.dataframe(top_graph, use_container_width=True, hide_index=True)
@@ -413,7 +509,9 @@ with risk_tab:
             st.info(f"Drift report not found at `{DRIFT_REPORT}`.")
         else:
             st.json(drift)
-            st.caption("PSI ≥ 0.10 is a warning and PSI ≥ 0.25 is commonly treated as critical in this project configuration.")
+            st.caption(
+                "PSI ≥ 0.10 is a warning and PSI ≥ 0.25 is commonly treated as critical in this project configuration."
+            )
 
 st.divider()
 st.caption(

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 
-import pandas as pd
 from sqlalchemy import create_engine
 
 from aegis_aml.analytics.dashboard_data import (
@@ -66,12 +65,12 @@ def test_empty_database(tmp_path):
 
 
 def test_parse_prometheus_metrics():
-    raw = '''
+    raw = """
 # HELP aegis_score_requests_total Requests
 # TYPE aegis_score_requests_total counter
 aegis_score_requests_total{decision="alert",status="success"} 12.0
 aegis_model_ready 1.0
-'''
+"""
     metrics = parse_prometheus_metrics(raw)
     assert metrics['aegis_score_requests_total{decision="alert",status="success"}'] == 12.0
     assert metrics["aegis_model_ready"] == 1.0

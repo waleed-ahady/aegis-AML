@@ -5,8 +5,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-import numpy as np
-import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.impute import SimpleImputer
@@ -27,7 +25,9 @@ from aegis_aml.modeling.evaluate import evaluate_predictions
 from aegis_aml.modeling.threshold import select_threshold
 
 
-def temporal_slices(rows: int, validation_fraction: float, test_fraction: float) -> tuple[slice, slice, slice]:
+def temporal_slices(
+    rows: int, validation_fraction: float, test_fraction: float
+) -> tuple[slice, slice, slice]:
     if rows < 100:
         raise ValueError("At least 100 rows are required for temporal train/validation/test splits")
     train_end = int(rows * (1.0 - validation_fraction - test_fraction))

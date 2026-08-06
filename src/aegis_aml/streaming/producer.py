@@ -12,7 +12,9 @@ def _kafka_producer(bootstrap_servers: str) -> Any:
     try:
         from confluent_kafka import Producer
     except ImportError as exc:
-        raise RuntimeError("Install streaming support with `pip install -e '.[streaming]'`") from exc
+        raise RuntimeError(
+            "Install streaming support with `pip install -e '.[streaming]'`"
+        ) from exc
     return Producer({"bootstrap.servers": bootstrap_servers, "client.id": "aegis-producer"})
 
 
