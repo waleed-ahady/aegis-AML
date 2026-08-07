@@ -7,7 +7,7 @@ name = "aegis-aml"
 version = "0.3.0"
 description = "Production-oriented anti-money-laundering transaction monitoring platform"
 readme = "README.md"
-requires-python = ">=3.11,<3.14"
+requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 authors = [{ name = "AegisAML Contributors" }]
 keywords = ["anti-money-laundering", "fraud-detection", "machine-learning", "mlops", "fastapi"]
