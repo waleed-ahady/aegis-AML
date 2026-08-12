@@ -43,9 +43,6 @@ flowchart LR
     N --> O[Feedback labels]
     O --> P[Future retraining dataset]
 ```
-
-See [docs/architecture.md](docs/architecture.md) for data flow, boundaries, scaling decisions, and failure modes.
-
 ## Quick start
 
 Python 3.11–3.13 is supported.
