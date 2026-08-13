@@ -14,15 +14,15 @@ class TransactionRequest(BaseModel):
     to_bank: str = Field(min_length=1, max_length=64)
     to_account: str = Field(min_length=1, max_length=128)
     amount_received: float = Field(ge=0)
-    receiving_currency: str = Field(min_length=3, max_length=16)
+    receiving_currency: str = Field(min_length=3, max_length=64)
     amount_paid: float = Field(ge=0)
-    payment_currency: str = Field(min_length=3, max_length=16)
+    payment_currency: str = Field(min_length=3, max_length=64)
     payment_format: str = Field(min_length=1, max_length=64)
 
     @field_validator("receiving_currency", "payment_currency")
     @classmethod
     def uppercase_currency(cls, value: str) -> str:
-        return value.upper()
+        return value.upper() 
 
 
 class ScoreResponse(BaseModel):
